@@ -1,0 +1,110 @@
+service: dd-aws-apicall-metrics
+
+provider:
+  name: aws
+  runtime: python3.6
+
+# you can overwrite defaults here
+  stage: ${opt:stage, "dev"}
+  profile: ${opt:profile, "default"}
+  region: ${self:custom.region, "us-east-1"}
+
+# you can add statements to the Lambda function's IAM Role here
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action: "ec2:DescribeRegions"
+      Resource: "*"
+    - Effect: "Allow"
+      Action: "sts:GetCallerIdentity"
+      Resource: "*"
+    - Effect: "Allow"
+      Action: "cloudtrail:LookupEvents"
+      Resource: "*"
+
+# you can add packaging information here
+package:
+  exclude:
+    - "conf/**"
+    - "node_modules/**"
+    - "images/**"
+    - "*.json"
+    - "*.md"
+
+functions:
+  Main:
+    handler: handler.lambda_handler
+    awsKmsKeyArn: ${self:custom.awsKmsKeyArn}
+    memorySize: 256
+    timeout: 300
+    description: "Post AWS API Events metrics to Datadog"
+    events:
+      - schedule: ${self:custom.schedule}
+
+#    Define function environment variables here
+    environment:
+      logLevel: ${self:custom.logLevel}
+      awsAccountName: ${self:custom.awsAccountName}
+      userName: ${self:custom.userName}
+      metricName: ${self:custom.metricName}
+      kmsEncryptedDdApiKey: ${self:custom.kmsEncryptedDdApiKey}
+      kmsEncryptedDdAppKey: ${self:custom.kmsEncryptedDdAppKey}
+
+# you can add CloudFormation resource templates here
+resources:
+  Resources:
+    KMSKey:
+      Type: "AWS::KMS::Key"
+      Properties:
+        Description: "dd-aws-apicall-metrics"
+        Enabled: True
+        EnableKeyRotation: False
+        KeyPolicy:
+          Version: "2012-10-17"
+          Id: "key-dd-aws-apicall-metrics"
+          Statement:
+            -
+              Sid: "Allow administration of the key"
+              Effect: "Allow"
+              Principal:
+                AWS:
+                  Fn::Join:
+                    - ''
+                    -
+                      - 'arn:aws:iam::'
+                      - Ref: AWS::AccountId
+                      - ':root'
+              Action: "kms:*"
+              Resource: "*"
+            -
+              Sid: "Allow use of the key"
+              Effect: "Allow"
+              Principal:
+                AWS:
+                 Fn::GetAtt:
+                  - IamRoleLambdaExecution
+                  - "Arn"
+              Action:
+                - "kms:Encrypt"
+                - "kms:Decrypt"
+                - "kms:ReEncrypt*"
+                - "kms:GenerateDataKey*"
+                - "kms:DescribeKey"
+              Resource: "*"
+    KMSKeyAlias:
+      Type: "AWS::KMS::Alias"
+      Properties:
+        AliasName: alias/dd-aws-apicall-metrics-${self:provider.stage}
+        TargetKeyId:
+          Ref: KMSKey
+    MainLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        RetentionInDays: "60"
+  Outputs:
+    KMSArn:
+      Value:
+        Fn::GetAtt: [ "KMSKey", "Arn" ]
+
+plugins:
+  - serverless-python-requirements
+custom: ${file(./conf/${self:provider.profile}.${self:provider.stage}.yml)}

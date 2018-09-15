@@ -1,0 +1,14 @@
+{
+  "name": "dd-aws-apicall-metrics",
+  "version": "1.0.0",
+  "description": "Post AWS API Events metrics to Datadog",
+  "dependencies": {
+    "serverless": "^1.27.3",
+    "serverless-python-requirements": "^4.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:htnosm/dd-aws-apicall-metrics.git"
+  },
+  "license": "MIT"
+}
