@@ -21,7 +21,7 @@ sts = boto3.client('sts')
 ec2 = boto3.client('ec2')
 tz = pytz.timezone('UTC')
 aws_account_name = os.environ['awsAccountName']
-role_name = os.environ['userName']
+user_name = os.environ['userName']
 metric_name = os.environ['metricName']
 
 api_key = boto3.client('kms').decrypt(CiphertextBlob=b64decode(os.environ['kmsEncryptedDdApiKey']))['Plaintext'].decode('utf-8')
@@ -33,7 +33,7 @@ options = {
 initialize(**options)
 
 
-def get_events(region, role_name, start_time, end_time):
+def get_events(region, user_name, start_time, end_time):
   logger.info('get_events (region: ' + region + ')')
   cloudtrail = boto3.client('cloudtrail', region_name=region)
   events = []
@@ -49,7 +49,7 @@ def get_events(region, role_name, start_time, end_time):
           LookupAttributes=[
             {
               'AttributeKey': 'Username',
-              'AttributeValue': role_name
+              'AttributeValue': user_name
             },
           ],
           StartTime=start_time,
@@ -62,7 +62,7 @@ def get_events(region, role_name, start_time, end_time):
           LookupAttributes=[
             {
               'AttributeKey': 'Username',
-              'AttributeValue': role_name
+              'AttributeValue': user_name
             },
           ],
           StartTime=start_time,
@@ -129,7 +129,7 @@ def lambda_handler(event, context):
 
   regions = ec2.describe_regions()
   for region in regions['Regions']:
-    events = get_events(region['RegionName'], role_name, start_time, end_time)
+    events = get_events(region['RegionName'], user_name, start_time, end_time)
     if events is not None:
       points = calc_events(events)
       if points is not None:
