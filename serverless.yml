@@ -104,6 +104,9 @@ resources:
     KMSArn:
       Value:
         Fn::GetAtt: [ "KMSKey", "Arn" ]
+    MainEventsRuleSchedule1:
+      Value:
+        Ref: MainEventsRuleSchedule1
 
 plugins:
   - serverless-python-requirements

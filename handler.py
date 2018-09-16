@@ -100,7 +100,7 @@ def post_datadog(aws_account_name, metric_name, aws_account, region, point_time,
     tags.append('region:' + region)
     tags.append('aws_account_name:' + aws_account_name)
     try:
-      logger.info('post_datadog tags: ' + str(tags))
+      logger.info('post_datadog timestamp: ' + datetime.fromtimestamp(point_time).strftime("%Y/%m/%d %H:%M:%S") + ' , tags: ' + str(tags))
       response = api.Metric.send(
         metric=metric_name,
         type='count',
