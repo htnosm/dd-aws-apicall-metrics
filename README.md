@@ -137,5 +137,11 @@ sls deploy -f Main --profile ${_PROFILE} --stage ${_STAGE} --verbose
 ## Test Invoke
 
 ```bash
-sls invoke -f Main -l  --profile ${_PROFILE} --stage ${_STAGE} --verbose
+sls invoke -f Main -l --profile ${_PROFILE} --stage ${_STAGE} --verbose
+```
+
+## Remove
+
+```bash
+sls remove --profile ${_PROFILE} --stage ${_STAGE} --verbose
 ```
