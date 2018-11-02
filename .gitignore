@@ -106,5 +106,6 @@ venv.bak/
 # npm
 node_modules/
 
-# conf
+# Serverless directories
+.serverless
 conf/*.yml
